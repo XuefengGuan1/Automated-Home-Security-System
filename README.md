@@ -1,6 +1,6 @@
 # Automated-Home-Security-System
 
-## - Project Purpose
+## Project Purpose
 Living in San Francisco can be dangerous sometimes, thus, I put my thoughts on creating a home security system that can best prevent home break-ins.
 
 This home security system has several functionalities:
