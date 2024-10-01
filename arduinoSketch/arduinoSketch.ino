@@ -32,6 +32,7 @@ void wifiReconnection() {
 int pin_magnet = 12;
 int pinBuzzer = 27;
 int switchState = 0;
+
 void setup() {
   Serial.begin(115200);
   initWifi();
