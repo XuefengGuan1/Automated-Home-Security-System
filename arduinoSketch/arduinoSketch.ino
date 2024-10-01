@@ -1,20 +1,58 @@
-int pin = 12;
+#include <WiFi.h>
+
+//Wifi Connection
+const char* wifiName = "myWifi1111";
+const char* wifiPassw = "Abc123abc";
+void initWifi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wifiName, wifiPassw);
+  Serial.println("Connecting to wifi" + String(wifiName));
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Still connecting....");
+    delay(10000);
+  }
+
+  Serial.println("Connection successful!");
+}
+
+//Wifi Reconnection
+unsigned int currTime = 0;
+unsigned int lastTime = 0;
+unsigned int timeInterval = 10000;  //Check every 10 seconds
+void wifiReconnection() {
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Wifi connection lost, trying to reconnect");
+    WiFi.disconnect();
+    WiFi.reconnect();
+  }
+  Serial.println("Wifi connection back");
+}
+
+int pin_magnet = 12;
 int pinBuzzer = 27;
 int switchState = 0;
-void setup(){
-  pinMode(pin,INPUT_PULLUP);
-  pinMode(pinBuzzer, OUTPUT);
+void setup() {
   Serial.begin(115200);
+  initWifi();
+  pinMode(pin_magnet, INPUT_PULLUP);
+  pinMode(pinBuzzer, OUTPUT);
 }
-void loop(){
-  switchState = digitalRead(pin);
-
-  if(switchState == LOW){
+void loop() {
+  currTime = millis();
+  if (currTime - lastTime >= timeInterval) {
+    if (WiFi.status() != WL_CONNECTED) {
+      wifiReconnection();
+    }
+    lastTime = currTime;
+  }
+  switchState = digitalRead(pin_magnet);
+  if (switchState == LOW) {
     Serial.println("switch is closed");
-    digitalWrite(pinBuzzer,LOW);
-  }else{
+    digitalWrite(pinBuzzer, LOW);
+  } else {
     Serial.println("switch is open");
-    digitalWrite(pinBuzzer,HIGH);
+    digitalWrite(pinBuzzer, HIGH);
   }
   delay(500);
 }
