@@ -14,6 +14,8 @@ void initWifi() {
   }
 
   Serial.println("Connection successful!");
+  IPAddress myIPAddress = WiFi.localIP();
+  Serial.println(myIPAddress);
 }
 
 //Wifi Reconnection
@@ -60,6 +62,7 @@ void loop() {
   if(client){
     if(client.connected()){
       Serial.println("client connected");
+      client.println("hello there!");
     }
     client.stop();
   }
