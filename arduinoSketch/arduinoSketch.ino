@@ -29,16 +29,24 @@ void wifiReconnection() {
   Serial.println("Wifi connection back");
 }
 
+//Server setup
+WiFiServer server(8080);
+void initServer(){
+    server.begin();
+    Serial.println("Server is up and running");
+}
+
 int pin_magnet = 12;
 int pinBuzzer = 27;
 int switchState = 0;
-
 void setup() {
   Serial.begin(115200);
   initWifi();
+  initServer();
   pinMode(pin_magnet, INPUT_PULLUP);
   pinMode(pinBuzzer, OUTPUT);
 }
+
 void loop() {
   currTime = millis();
   if (currTime - lastTime >= timeInterval) {
@@ -47,6 +55,15 @@ void loop() {
     }
     lastTime = currTime;
   }
+
+  WiFiClient client = server.available();
+  if(client){
+    if(client.connected()){
+      Serial.println("client connected");
+    }
+    client.stop();
+  }
+
   switchState = digitalRead(pin_magnet);
   if (switchState == LOW) {
     Serial.println("switch is closed");
