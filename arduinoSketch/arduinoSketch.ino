@@ -33,9 +33,31 @@ void wifiReconnection() {
 
 //Server setup
 WiFiServer server(8080);
-void initServer(){
-    server.begin();
-    Serial.println("Server is up and running");
+void initServer() {
+  server.begin();
+  Serial.println("Server is up and running");
+}
+
+void serverRequest(char* message) {
+  char fullMessage[50] = "";
+  strcat(fullMessage, "<html><body><h1>");
+  strcat(fullMessage, message);
+  strcat(fullMessage, "</h1></body></html>");
+
+  WiFiClient client = server.available();
+  if (client) {
+    if (client.connected()) {
+      Serial.println("client connected");
+
+      client.println("HTTP/1.1 200");
+      client.println("Content-Type: text/html; charset=UFT-8");
+      client.println("Connection: close");
+      client.println();
+
+      client.println(fullMessage);
+    }
+    client.stop();
+  }
 }
 
 int pin_magnet = 12;
@@ -58,21 +80,14 @@ void loop() {
     lastTime = currTime;
   }
 
-  WiFiClient client = server.available();
-  if(client){
-    if(client.connected()){
-      Serial.println("client connected");
-      client.println("hello there!");
-    }
-    client.stop();
-  }
-
   switchState = digitalRead(pin_magnet);
   if (switchState == LOW) {
     Serial.println("switch is closed");
+    serverRequest("Window closed");
     digitalWrite(pinBuzzer, LOW);
   } else {
     Serial.println("switch is open");
+    serverRequest("Window opened");
     digitalWrite(pinBuzzer, HIGH);
   }
   delay(500);
