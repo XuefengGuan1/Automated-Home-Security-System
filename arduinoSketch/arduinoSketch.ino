@@ -10,8 +10,8 @@ unsigned int timeInterval = 10000;  // Check every 10 seconds
 // Server setup
 WiFiServer server(8080);
 
-void serverRequest(char* message) {
-  char fullMessage[50] = "";
+void serverRequest(const char* message) {
+  char fullMessage[100] = "";
   strcat(fullMessage, "<html><body><h1>");
   strcat(fullMessage, message);
   strcat(fullMessage, "</h1></body></html>");
@@ -69,33 +69,83 @@ void wifiManipulation(void *pvParameters) {
   }
 }
 
-// Hardware pins
-int pin_magnet = 12;
+// Hardware pins for each sensor
+// Window 1
+int pin_magnet1 = 12; 
+// Window 2
+int pin_magnet2 = 14; 
+// Motion Sensor
+int pin_motion = 16;  
 int pinBuzzer = 27;
-int switchState = 0;
+
+// Task to monitor Window 1
+void monitorWindow1(void *pvParameters) {
+  while (true) {
+    int switchState = digitalRead(pin_magnet1);
+    if (switchState == LOW) {
+      Serial.println("Window 1 is closed");
+      serverRequest("Window 1 closed");
+      digitalWrite(pinBuzzer, LOW);
+    } else {
+      Serial.println("Window 1 is open");
+      serverRequest("Window 1 opened");
+      digitalWrite(pinBuzzer, HIGH);
+    }
+    delay(500);
+  }
+}
+
+// Task to monitor Window 2
+void monitorWindow2(void *pvParameters) {
+  while (true) {
+    int switchState = digitalRead(pin_magnet2);
+    if (switchState == LOW) {
+      Serial.println("Window 2 is closed");
+      serverRequest("Window 2 closed");
+      digitalWrite(pinBuzzer, LOW);
+    } else {
+      Serial.println("Window 2 is open");
+      serverRequest("Window 2 opened");
+      digitalWrite(pinBuzzer, HIGH);
+    }
+    delay(500);
+  }
+}
+
+// Task to monitor Motion Sensor
+void monitorMotionSensor(void *pvParameters) {
+  while (true) {
+    int motionDetected = digitalRead(pin_motion);
+    if (motionDetected == LOW) {
+      Serial.println("No motion detected");
+      serverRequest("No motion");
+      digitalWrite(pinBuzzer, LOW);
+    } else {
+      Serial.println("Motion detected");
+      serverRequest("Motion detected");
+      digitalWrite(pinBuzzer, HIGH);
+    }
+    delay(500);
+  }
+}
 
 void setup() {
   Serial.begin(115200);
-  pinMode(pin_magnet, INPUT_PULLUP);
+  pinMode(pin_magnet1, INPUT_PULLUP);
+  pinMode(pin_magnet2, INPUT_PULLUP);
+  pinMode(pin_motion, INPUT_PULLUP);
   pinMode(pinBuzzer, OUTPUT);
 
   // Start WiFi and server in separate task
   xTaskCreate(wifiManipulation, "ReconnectingWifiIfDisconnected", 10000, NULL, 1, NULL);
   server.begin();
   Serial.println("Server is up and running");
+
+  // Start tasks for each sensor
+  xTaskCreate(monitorWindow1, "MonitorWindow1", 10000, NULL, 1, NULL);
+  xTaskCreate(monitorWindow2, "MonitorWindow2", 10000, NULL, 1, NULL);
+  xTaskCreate(monitorMotionSensor, "MonitorMotionSensor", 10000, NULL, 1, NULL);
 }
 
 void loop() {
-  // Check the magnet switch and respond accordingly
-  switchState = digitalRead(pin_magnet);
-  if (switchState == LOW) {
-    Serial.println("Switch is closed");
-    serverRequest("Window closed");
-    digitalWrite(pinBuzzer, LOW);
-  } else {
-    Serial.println("Switch is open");
-    serverRequest("Window opened");
-    digitalWrite(pinBuzzer, HIGH);
-  }
-  delay(500);
 }
